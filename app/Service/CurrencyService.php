@@ -70,13 +70,12 @@ class CurrencyService implements CurrencyServiceInterface
         foreach ($xml->attributes() as $key => $value) {
             $res[$key]  = (string) $value;
         }
-        foreach ($xml->Valute as $key => $item){
-            $new = [];
+        foreach ($xml->Valute as $item) {
+            $new = (array) $item;
             foreach($item->attributes() as $key => $value) {
-                $new = (array)$item;
-                unset($new['@attributes']);
                 $new[$key] = (string) $value;
             }
+            unset($new['@attributes']);
             $res['valute'][] = $new;
         };
 

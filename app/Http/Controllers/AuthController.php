@@ -1,57 +1,64 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\RegisterRequest;
 use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
+
 class AuthController extends Controller
 {
-
-    public function showLogin()
+    /**
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function showLogin(): Response
     {
         return view('auth.login');
     }
+
     /**
-     * Handle an authentication attempt.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  \App\Http\Requests\LoginRequest  $request
+     * @return \Illuminate\Http\RedirectResponse
      */
-    public function login(Request $request)
+    public function login(LoginRequest $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
-
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-
-            return redirect()->route('dashboard');
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return back()->withErrors([
+                'email' => 'Логин или пароль введен не верно',
+            ])->onlyInput('email');
         }
 
-        return back()->withErrors([
-            'email' => 'Логин или пароль введен не верно',
-        ])->onlyInput('email');
+        $request->session()->regenerate();
+        return redirect()->route('dashboard');
     }
 
-    public function showRegistration()
+    /**
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function showRegistration(): Response
     {
         return view('auth.registration');
     }
 
-    public function registration(Request $request)
+
+    /**
+     * Handle an authentication attempt.
+     *
+     * @param  \App\Http\Requests\RegisterRequest  $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function registration(RegisterRequest $request): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|min:6',
-        ]);
-
-
         $newUser = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -65,8 +72,11 @@ class AuthController extends Controller
         return redirect()->route('dashboard')->withSuccess('Вы зарегистрировались');
     }
 
-
-    public function logout()
+    /**
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function logout(): RedirectResponse
     {
         Session::flush();
         Auth::logout();
